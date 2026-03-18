@@ -1,270 +1,163 @@
-# MY-AL-iLQR
+# AL-iLQR Starter
 
-一个面向教学的 **AL-iLQR（Augmented Lagrangian iLQR）** 轨迹优化项目。
-
-从零实现一个可运行、可验证、可视化的自动驾驶轨迹优化系统，涵盖从无约束 iLQR 到约束 AL-iLQR 的完整算法链路。
-
-> **注意**：本仓库实现的是 AL-iLQR 主线算法，不是完整的 ALTRO 求解器。与论文的详细差异参见 [guide/chapter8_extensions.md](guide/chapter8_extensions.md#与论文的差异汇总)。
+> 🌐 [中文](#中文版) | [English](#english-version)
 
 ---
 
-## 快速开始
+<a name="中文版"></a>
 
-### 环境要求
+## 中文版
 
-| 依赖 | 最低版本 | 说明 |
-|------|---------|------|
-| CMake | 3.16 | 构建系统 |
-| g++ 或 clang++ | 支持 C++17 | 编译器 |
-| Eigen3 | 3.3 | 线性代数库（系统安装） |
-| OpenGL + GLFW + Dear ImGui | — | 交互式前端（GLFW 和 ImGui 由 CMake 自动下载） |
-| Python3 + matplotlib + numpy | — | 可视化脚本（可选） |
+一个面向教学的 **AL-iLQR（Augmented Lagrangian iLQR）** 轨迹优化入门项目。
 
-### 一键安装依赖（Ubuntu / Debian）
+本仓库聚焦 **AL-iLQR 算法**，帮助读者从零理解：
 
-```bash
-git clone <本仓库地址>
-cd MY-AL-iLQR
-bash scripts/install_deps.sh
-```
+- 离散时间最优控制问题如何建模
+- 无约束 iLQR 如何工作
+- 增广拉格朗日如何处理约束
+- AL-iLQR 外层 / iLQR 内层如何协同求解
+- 如何把论文中的求解流程落到可运行代码
 
-脚本会自动安装编译工具、Eigen3、OpenGL 图形库和 Python 可视化依赖。
-
-<details>
-<summary>手动安装（如果不使用脚本）</summary>
-
-```bash
-# 编译工具和核心依赖
-sudo apt-get install -y build-essential cmake libeigen3-dev
-
-# ImGui 前端所需的图形库
-sudo apt-get install -y libgl-dev libx11-dev libxrandr-dev \
-  libxinerama-dev libxcursor-dev libxi-dev libwayland-dev libxkbcommon-dev
-
-# Python 可视化（可选）
-sudo apt-get install -y python3 python3-matplotlib python3-numpy
-```
-
-</details>
-
-### 编译
-
-```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j$(nproc)
-```
-
-首次编译时 CMake 会自动下载 GLFW 和 Dear ImGui（约 10 MB），后续编译不再重复下载。
-
-如果不需要 ImGui 前端（例如无图形环境的服务器），可以关闭：
-
-```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DMY_AL_ILQR_ENABLE_IMGUI_FRONTEND=OFF
-```
-
-### 运行测试
-
-```bash
-cd build && ctest --output-on-failure
-```
-
-14 个测试应全部通过。
-
-### 启动交互式前端
-
-```bash
-./build/imgui_frontend
-```
-
-在 ImGui 窗口中可以：
-- 调整车辆模型参数、约束范围、障碍物位置
-- 点击 **Plan** 运行 AL-iLQR 求解
-- 查看规划轨迹、速度曲线、曲率曲线、加速度曲线
-- 结果自动导出到 `build/imgui_frontend_trajectory.csv`
+![自动驾驶完整demo](img/image.png)
 
 ---
 
-## 项目结构
+### 文档说明
 
-```
-MY-AL-iLQR/
-├── include/                  ← 头文件
-│   ├── core/                 ← 数学类型、轨迹容器
-│   ├── dynamics/             ← 动力学模型接口
-│   ├── cost/                 ← 代价函数
-│   ├── constraints/          ← 约束函数
-│   ├── lqr/                  ← 有限时域 LQR
-│   ├── ilqr/                 ← iLQR 求解器
-│   ├── al/                   ← 增广拉格朗日 + AL-iLQR
-│   ├── autodrive/            ← 自动驾驶场景建模
-│   ├── problems/             ← OCP 问题定义
-│   └── visualization/        ← CSV 导出
-├── src/                      ← 源文件（与 include/ 对应）
-├── apps/
-│   └── rerun_imgui_frontend.cpp  ← ImGui 交互式前端
-├── examples/                 ← 各阶段可执行示例
-├── tests/                    ← 各阶段单元测试
-├── config/
-│   └── vehicle_bicycle_config.ini  ← 车辆参数配置
-├── visualization/            ← Python 绘图脚本
-├── guide/                    ← 开发指南文档（理论+代码详解）
-├── tutorial/                 ← 独立教程工程（每章一个 CMake 工程）
-├── paper/                    ← 参考论文 PDF
-├── ref/                      ← 参考代码（不参与编译）
-│   ├── altro-cpp/
-│   └── toy-example-of-iLQR/
-├── scripts/
-│   └── install_deps.sh       ← 一键安装依赖脚本
-└── CMakeLists.txt
-```
+安装依赖、编译和运行方式，请查看 [`quick_start.md`](quick_start.md)。
 
 ---
 
-## 可执行程序
+### Starter 版本包含什么
 
-### 阶段示例（examples/）
+Starter 版本保留了 AL-iLQR 的核心主线，主要包括：
 
-从简单到复杂，每个 phase 可独立运行：
+- 离散最优控制问题建模
+- 前向 rollout
+- 有限时域 LQR
+- 无约束 iLQR
+- 数值差分的局部展开
+- backward pass / forward pass
+- 正则化与线搜索
+- 增广拉格朗日外层循环
+- 基础约束优化示例
 
-| 程序 | 说明 |
+如果你的目标是先把「AL-iLQR 到底是怎么工作的」这件事搞明白，这个版本已经足够作为一个清晰的起点。
+
+---
+
+### Starter 版本没有包含什么
+
+当前 Starter 版本未包含：
+
+- 车体多圆拟合
+- 多圆车体-障碍物碰撞约束
+- 车道线边界约束
+- 更完整的自动驾驶场景模块
+- 完整版工程化教程与扩展说明
+
+因此**当前仓库**轨迹优化结果如下图：
+
+![starter版本演示](img/image-1.png)
+
+这个版本更适合你学习求解器主线、约束优化基本思想、AL-iLQR 的代码结构，而不是直接把它当成一个更完整的自动驾驶规划工程。
+
+---
+
+### 推荐学习路径
+
+建议按照下面的顺序阅读：
+
+1. 先理解最优控制问题与 rollout
+2. 再看有限时域 LQR
+3. 然后阅读无约束 iLQR
+4. 再理解增广拉格朗日如何包装约束
+5. 最后理解 AL-iLQR 外层循环
+
+
+---
+
+
+掌握一份代码很简单，最宝贵的是，优化这个工程的经验，修复bug的经验，比如：
+
+- 如何进行更精确的碰撞检测
+- 多圆如何拟合车体
+- 车道线边界约束如何添加
+- 如何提升数值稳定性
+- 如何降低耗时
+- 论文和代码如何对齐
+- 以及更多的工程技巧
+- bug修复经验
+- ......
+
+### 进阶学习
+
+当前仓库代码是完整的，我们称为starter版本，包含完整的al-ilqr求解器，如果你想进阶学习，可以获取Pro版本。
+
+Pro 版本面向希望进一步深入的学习者和工程开发者，让你学会如何将一个al-ilqr求解器，一步一步添加约束，应用到特定的场景如自动驾驶，移动机器人等。
+#### 已完成功能
+- 更完整的源码 （已完成）
+  - 车体多圆拟合
+  - 多圆车体-障碍物碰撞约束
+  - 车道线边界约束
+  - 更完整的自动驾驶场景模块
+- 更完整的教程与文档 （已完成）
+- 更系统的论文步骤对照说明 （已完成）
+
+#### 未来定期升级更新功能
+
+| 更新的主题 | 说明 |
 |------|------|
-| `phase0_linear_rollout` | 线性系统前向仿真 |
-| `phase1_unicycle_rollout` | 独轮车模型 rollout |
-| `phase1_bicycle_rollout` | 自行车模型 rollout |
-| `phase2_linear_lqr_demo` | 有限时域 LQR |
-| `phase3_unicycle_ilqr_demo` | 无约束 iLQR |
-| `phase4_unicycle_ilqr_stable_demo` | iLQR + 正则化 + 线搜索 |
-| `phase5_constraint_evaluation_demo` | 约束评估 |
-| `phase6_augmented_lagrangian_demo` | 增广拉格朗日代价 |
-| `phase7_al_ilqr_demo` | 完整 AL-iLQR |
-| `phase8_autodrive_demo` | 自动驾驶避障 |
-| `phase9_autodrive_visualization_demo` | 自动驾驶 + CSV 导出 |
-| `phase10_numerical_enhancement_demo` | 数值增强 |
-| `phase11_dynamic_obstacle_demo` | 动态障碍物 |
-| `phase12_dynamic_obstacle_speed_sweep_demo` | 障碍物速度扫描 |
+| 解析 Jacobian | 替代数值差分，提升精度和效率 |
+| 更复杂的动力学 | 动力学自行车模型 |
+| 曲线参考线 | 处理弯道、交叉口 |
+| 多障碍物 | 多个静态/动态障碍物的混合场景 |
+| 实时求解 | 热启动 + 缩短时域 |
+| MPC 框架 | 滚动时域在线规划 |
+| 自动微分 | 替代数值差分，精确且高效 |
 
-运行示例：
 
-```bash
-./build/phase8_autodrive_demo
-```
+#### Pro版本获取方式
 
-### 交互式前端
+采取文章付费，Pro版本代码免费持续更新的方式。
 
-| 程序 | 说明 |
-|------|------|
-| `imgui_frontend` | Dear ImGui 交互式规划界面 |
+1. 购买指定的公众号付费文章(一次性付费即可，包含后续所有文章)。
+2. 将您的github用户名发送给我(公众号私信或添加微信发送都行)
+3. 我会给您添加github仓库权限。
+4. 详细的开发指南，会在仓库里陆续更新，也会在个人博客上更新(完成步骤1可获得阅读权限)
 
----
+**微信号**：ahrs365
 
-## Python 可视化
+**微信公众号**：
 
-部分 phase 示例会导出 CSV 文件，可用 Python 脚本绘图：
+<p align="center">
+  <img src="img/公众号.jpg" width="200">
+</p>
 
-```bash
-# 先运行 demo 生成 CSV
-./build/phase9_autodrive_visualization_demo
+**交流群**
 
-# 再用 Python 绘图
-python3 visualization/plot_phase9_autodrive.py
-```
+<p align="center">
+  <img src="img/image2.png" width="200">
+</p>
 
-可用的绘图脚本：
 
-| 脚本 | 对应 demo |
-|------|----------|
-| `visualization/plot_phase2_lqr.py` | phase2 |
-| `visualization/plot_phase3_ilqr.py` | phase3 |
-| `visualization/plot_phase8_autodrive.py` | phase8 |
-| `visualization/plot_phase9_autodrive.py` | phase9 |
-| `visualization/plot_phase11_dynamic_obstacle.py` | phase11 |
-| `visualization/plot_phase12_speed_sweep.py` | phase12 |
+**博客：** [gl-robotics](https://www.gl-robotics.com/)
 
 ---
 
-## 文档与教程
+### License
 
-### 开发指南（guide/）
+本 Starter 仓库采用 [MIT License](LICENSE)。
 
-系统性讲解算法理论与代码实现，适合零基础入门：
-
-| 文档 | 内容 |
-|------|------|
-| [guide/README.md](guide/README.md) | 总目录与依赖关系图 |
-| [guide/chapter1_basics.md](guide/chapter1_basics.md) | 轨迹、动力学、代价函数 |
-| [guide/chapter2_lqr.md](guide/chapter2_lqr.md) | 有限时域 LQR 与 Riccati 递推 |
-| [guide/chapter3_ilqr.md](guide/chapter3_ilqr.md) | 无约束 iLQR |
-| [guide/chapter4_constraints.md](guide/chapter4_constraints.md) | 约束接口与建模 |
-| [guide/chapter5_augmented_lagrangian.md](guide/chapter5_augmented_lagrangian.md) | 增广拉格朗日方法 |
-| [guide/chapter6_al_ilqr.md](guide/chapter6_al_ilqr.md) | AL-iLQR 双层求解器 |
-| [guide/chapter7_autodrive.md](guide/chapter7_autodrive.md) | 自动驾驶场景应用 |
-| [guide/chapter8_extensions.md](guide/chapter8_extensions.md) | 工程增强与论文差异 |
-| [guide/chapter_final_overview.md](guide/chapter_final_overview.md) | 总览：函数调用链与流程图 |
-| [guide/appendix_paper_alignment.md](guide/appendix_paper_alignment.md) | 附录：论文步骤与代码对照 |
-
-### 独立教程（tutorial/）
-
-每章是一个独立的小型 CMake 工程，只包含当前主题所需的最小代码：
-
-- 总目录：[tutorial/README.md](tutorial/README.md)
-- 每章提供 example、test 和验收标准
+> 注意：Pro 版本采用自定义授权协议，不适用 MIT。
 
 ---
 
-## 理论参考
+### 支持项目
 
-本项目主要参考以下两篇论文：
+如果这个仓库对你有帮助，欢迎：
 
-1. **AL_iLQR_Tutorial.pdf** — AL-iLQR 主理论参考
-   - 离散时间最优控制问题建模
-   - iLQR 的 backward pass 和 forward pass
-   - 线搜索与正则化
-   - 增广拉格朗日外循环
+- 点一个 ⭐ Star
+- 分享给对轨迹优化感兴趣的朋友
+- 查看 Pro 版本以获取完整实现与教程
 
-2. **ALTRO A Fast Solver for Constrained Trajectory Optimization.pdf** — 工程增强参考
-   - AL-iLQR 的简洁算法表达
-   - 数值稳定性与大罚参数病态性
-   - Square-root backward pass、projection polishing 等高级特性（本项目未实现）
-
----
-
-## 算法核心特性
-
-- **动力学模型**：线性点质量、独轮车、运动学自行车模型
-- **代价函数**：二次代价（参考跟踪）、车道跟踪代价
-- **约束类型**：控制箱约束、终端目标、速度限制、单圆障碍物避障
-- **求解器**：数值差分 iLQR + 增广拉格朗日外循环
-- **正则化**：自适应 Levenberg-Marquardt 风格正则化
-- **线搜索**：Backtracking line search + ratio test
-- **障碍物**：静态/动态障碍物，单圆车体近似
-- **配置化**：车辆参数通过 INI 文件配置
-
----
-
-## 常见问题
-
-**Q: 编译时提示找不到 Eigen3？**
-
-```bash
-sudo apt-get install libeigen3-dev
-```
-
-**Q: 编译时提示找不到 OpenGL？**
-
-```bash
-sudo apt-get install libgl-dev
-```
-
-或者关闭 ImGui 前端编译：
-
-```bash
-cmake -B build -DMY_AL_ILQR_ENABLE_IMGUI_FRONTEND=OFF
-```
-
-**Q: ImGui 前端运行时窗口无法显示？**
-
-需要图形环境（X11 或 Wayland）。WSL2 用户需要安装 WSLg 或 X Server。
-
-**Q: GLFW/ImGui 下载失败？**
-
-首次编译需要网络连接下载 GLFW 和 Dear ImGui。下载完成后缓存在 `build/_deps/`，后续编译不再需要网络。如果网络不通，可以手动下载并放到对应目录。

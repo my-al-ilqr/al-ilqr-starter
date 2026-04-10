@@ -34,8 +34,6 @@ Pro版本为持续更新版，会持续修复bug，持续工程优化，有配�
 
 ### Pro版本更新日志
 
-[Pro仓库获取方式](https://gl-robotics.com/projects/al-ilqr-pro)
-
 #### 2026.03.19
 
 初始版本发布

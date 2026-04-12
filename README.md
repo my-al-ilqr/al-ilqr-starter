@@ -49,6 +49,12 @@ Pro版本为持续更新版，会持续修复bug，持续工程优化，有配�
 
 ![0331](img/0331.png)
 
+2026.04.12
+本次更新为 AL-iLQR 求解器引入了完整的解析求导能力，覆盖动力学 Jacobian、所有代价函数的梯度/Hessian、以及全部约束（PolygonCollisionConstraint 除外）的 Jacobian。用户可通过 UI 界面实时切换数值差分与解析求导模式，便于对比验证。
+
+![4月12日-封面](https://github.com/user-attachments/assets/53d48f22-4081-4f87-827e-b4e34d1fa78b)
+
+
 ---
 
 ## 文档说明
